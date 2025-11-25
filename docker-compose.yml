@@ -1,0 +1,83 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: brands-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: brands_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - brands-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Application
+  brands-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: brands-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/brands_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: brands_schema
+
+      # Server Configuration
+      SERVER_PORT: 8089
+
+      # JWT Configuration (use environment variable for production)
+      SECURITY_JWT_SECRET_KEY: ${JWT_SECRET_KEY:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      SECURITY_JWT_EXPIRATION_TIME: ${JWT_EXPIRATION_TIME:-86400000}
+
+      # Logging
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_SYSTEM_BRANDS: DEBUG
+
+      # Java Options
+      JAVA_OPTS: -Xmx512m -Xms256m
+    ports:
+      - "8089:8089"
+    networks:
+      - brands-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8089/actuator/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  brands-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
