@@ -1,5 +1,6 @@
 package com.system.brands.Controller;
 
+import com.system.brands.Dto.ProductOrderRequestDto;
 import com.system.brands.Dto.ProductRequestDto;
 import com.system.brands.Dto.ProductResponseDto;
 import com.system.brands.Service.ProductService;
@@ -35,7 +36,19 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/{id}")
+    @PutMapping("/reorder")
+    @Operation(summary = "Reorder a product", description = "Change the order position of a product. Other products will be shifted accordingly.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Product reordered successfully"),
+            @ApiResponse(responseCode = "404", description = "Product not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<ProductResponseDto> reorderProduct(@Valid @RequestBody ProductOrderRequestDto requestDto) {
+        ProductResponseDto product = productService.reorderProduct(requestDto);
+        return ResponseEntity.ok(product);
+    }
+
+    @GetMapping("/{id:\\d+}")
     @Operation(summary = "Get product by ID", description = "Retrieve a specific product by its ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved product"),
@@ -56,6 +69,16 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
+    @GetMapping("/category/{categoryId}")
+    @Operation(summary = "Get products by category ID", description = "Retrieve all products belonging to a specific category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved products")
+    })
+    public ResponseEntity<List<ProductResponseDto>> getProductsByCategoryId(@PathVariable Integer categoryId) {
+        List<ProductResponseDto> products = productService.getProductsByCategoryId(categoryId);
+        return ResponseEntity.ok(products);
+    }
+
     @PostMapping
     @Operation(summary = "Create a new product", description = "Create a new product with the provided information")
     @ApiResponses(value = {
@@ -68,7 +91,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(product);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     @Operation(summary = "Update a product", description = "Update an existing product by its ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Product updated successfully"),
@@ -82,7 +105,7 @@ public class ProductController {
         return ResponseEntity.ok(product);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     @Operation(summary = "Delete a product", description = "Delete a product by its ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Product deleted successfully"),
@@ -94,4 +117,3 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 }
-

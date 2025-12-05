@@ -81,9 +81,6 @@ public class BrandService {
                             .brandId(brand.getId())
                             .brandName(brand.getName())
                             .name(product.getName())
-                            .quantity(product.getQuantity())
-                            .packaging(product.getPackaging())
-                            .unit(product.getUnit())
                             .build())
                     .collect(Collectors.toList());
         }

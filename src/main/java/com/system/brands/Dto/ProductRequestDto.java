@@ -15,27 +15,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "Product request data")
 public class ProductRequestDto {
-    
+
     @NotNull(message = "Brand ID is required")
     @JsonProperty("brandId")
     @Schema(description = "Brand ID", example = "1")
     private Integer brandId;
-    
+
+    @JsonProperty("categoryId")
+    @Schema(description = "Category ID", example = "1")
+    private Integer categoryId;
+
     @NotBlank(message = "Product name is required")
     @JsonProperty("name")
     @Schema(description = "Product name", example = "Air Max 90")
     private String name;
-    
-    @JsonProperty("quantity")
-    @Schema(description = "Product quantity", example = "100")
-    private String quantity;
-    
-    @JsonProperty("packaging")
-    @Schema(description = "Product packaging", example = "Box")
-    private String packaging;
-    
-    @JsonProperty("unit")
-    @Schema(description = "Product unit", example = "Piece")
-    private String unit;
 }
-
