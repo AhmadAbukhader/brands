@@ -54,8 +54,8 @@ public class BrandService {
                 .orElseThrow(() -> new ResourceNotFoundException("Brand", "id", id));
 
         // Check if new name already exists for another brand
-        if (!brand.getName().equals(requestDto.getName()) && 
-            brandRepository.existsByName(requestDto.getName())) {
+        if (!brand.getName().equals(requestDto.getName()) &&
+                brandRepository.existsByName(requestDto.getName())) {
             throw new DuplicateResourceException("Brand", "name", requestDto.getName());
         }
 
@@ -73,15 +73,27 @@ public class BrandService {
 
     private BrandResponseDto convertToBrandResponseDto(Brand brand) {
         List<ProductResponseDto> products = null;
-        
+
         if (brand.getProducts() != null) {
             products = brand.getProducts().stream()
-                    .map(product -> ProductResponseDto.builder()
-                            .id(product.getId())
-                            .brandId(brand.getId())
-                            .brandName(brand.getName())
-                            .name(product.getName())
-                            .build())
+                    .map(product -> {
+                        ProductResponseDto.ProductResponseDtoBuilder builder = ProductResponseDto.builder()
+                                .id(product.getId())
+                                .brandId(brand.getId())
+                                .brandName(brand.getName())
+                                .name(product.getName());
+
+                        if (product.getCategory() != null) {
+                            builder.categoryId(product.getCategory().getId())
+                                    .categoryName(product.getCategory().getName());
+                        }
+
+                        if (product.getProductOrder() != null) {
+                            builder.productOrder(product.getProductOrder());
+                        }
+
+                        return builder.build();
+                    })
                     .collect(Collectors.toList());
         }
 
