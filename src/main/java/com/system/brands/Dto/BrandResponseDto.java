@@ -15,17 +15,24 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "Brand response data")
 public class BrandResponseDto {
-    
+
     @JsonProperty("id")
     @Schema(description = "Brand ID", example = "1")
     private Integer id;
-    
+
     @JsonProperty("name")
     @Schema(description = "Brand name", example = "Nike")
     private String name;
-    
+
+    @JsonProperty("image")
+    @Schema(description = "Brand image as base64 encoded string")
+    private String image;
+
+    @JsonProperty("imageUrl")
+    @Schema(description = "URL to fetch brand image", example = "/api/brands/1/image")
+    private String imageUrl;
+
     @JsonProperty("products")
     @Schema(description = "List of products under this brand")
     private List<ProductResponseDto> products;
 }
-

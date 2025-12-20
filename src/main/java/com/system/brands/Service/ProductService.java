@@ -13,7 +13,10 @@ import com.system.brands.Repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +43,12 @@ public class ProductService {
         }
 
         @Transactional(readOnly = true)
+        public Product getProductEntityById(Integer id) {
+                return productRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
+        }
+
+        @Transactional(readOnly = true)
         public List<ProductResponseDto> getProductsByBrandId(Integer brandId) {
                 return productRepository.findByBrandIdOrderedByProductOrder(brandId).stream()
                                 .map(this::convertToProductResponseDto)
@@ -54,7 +63,7 @@ public class ProductService {
         }
 
         @Transactional
-        public ProductResponseDto createProduct(ProductRequestDto requestDto) {
+        public ProductResponseDto createProduct(ProductRequestDto requestDto, MultipartFile image) throws IOException {
                 Brand brand = brandRepository.findById(requestDto.getBrandId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Brand", "id",
                                                 requestDto.getBrandId()));
@@ -66,10 +75,16 @@ public class ProductService {
                                                         requestDto.getCategoryId()));
                 }
 
+                byte[] imageBytes = null;
+                if (image != null && !image.isEmpty()) {
+                        imageBytes = image.getBytes();
+                }
+
                 Product product = Product.builder()
                                 .brand(brand)
                                 .category(category)
                                 .name(requestDto.getName())
+                                .image(imageBytes)
                                 .build();
 
                 Product savedProduct = productRepository.save(product);
@@ -82,7 +97,8 @@ public class ProductService {
         }
 
         @Transactional
-        public ProductResponseDto updateProduct(Integer id, ProductRequestDto requestDto) {
+        public ProductResponseDto updateProduct(Integer id, ProductRequestDto requestDto, MultipartFile image)
+                        throws IOException {
                 Product product = productRepository.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
@@ -100,6 +116,11 @@ public class ProductService {
                 product.setBrand(brand);
                 product.setCategory(category);
                 product.setName(requestDto.getName());
+
+                // Handle image update
+                if (image != null && !image.isEmpty()) {
+                        product.setImage(image.getBytes());
+                }
 
                 Product updatedProduct = productRepository.save(product);
                 return convertToProductResponseDto(updatedProduct);
@@ -135,11 +156,13 @@ public class ProductService {
 
                 if (newOrder < currentOrder) {
                         // Product moved upwards (e.g., 55 → 5)
-                        // Shift products from newOrder to currentOrder-1 down by 1
+                        // Shift products from newOrder to currentOrder-1 up by 1 (increase their order
+                        // values)
                         productRepository.shiftOrdersUp(newOrder, currentOrder);
                 } else {
                         // Product moved downwards (e.g., 5 → 55)
-                        // Shift products from currentOrder+1 to newOrder up by 1
+                        // Shift products from currentOrder+1 to newOrder down by 1 (decrease their
+                        // order values)
                         productRepository.shiftOrdersDown(currentOrder, newOrder);
                 }
 
@@ -155,14 +178,20 @@ public class ProductService {
         }
 
         private ProductResponseDto convertToProductResponseDto(Product product) {
-                return ProductResponseDto.builder()
+                ProductResponseDto.ProductResponseDtoBuilder builder = ProductResponseDto.builder()
                                 .id(product.getId())
                                 .brandId(product.getBrand().getId())
                                 .brandName(product.getBrand().getName())
                                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                                 .name(product.getName())
-                                .productOrder(product.getProductOrder())
-                                .build();
+                                .productOrder(product.getProductOrder());
+
+                if (product.getImage() != null) {
+                        builder.image(Base64.getEncoder().encodeToString(product.getImage()))
+                                        .imageUrl("/api/products/" + product.getId() + "/image");
+                }
+
+                return builder.build();
         }
 }

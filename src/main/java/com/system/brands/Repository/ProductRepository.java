@@ -15,13 +15,13 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     List<Product> findByCategoryId(Integer categoryId);
 
-    @Query(value = "SELECT * FROM products ORDER BY priority ASC NULLS LAST, id ASC", nativeQuery = true)
+    @Query(value = "SELECT * FROM brands_schema.products ORDER BY priority ASC NULLS LAST, id ASC", nativeQuery = true)
     List<Product> findAllOrderedByProductOrder();
 
-    @Query(value = "SELECT * FROM products WHERE brand_id = :brandId ORDER BY priority ASC NULLS LAST, id ASC", nativeQuery = true)
+    @Query(value = "SELECT * FROM brands_schema.products WHERE brand_id = :brandId ORDER BY priority ASC NULLS LAST, id ASC", nativeQuery = true)
     List<Product> findByBrandIdOrderedByProductOrder(@Param("brandId") Integer brandId);
 
-    @Query(value = "SELECT * FROM products WHERE category_id = :categoryId ORDER BY priority ASC NULLS LAST, id ASC", nativeQuery = true)
+    @Query(value = "SELECT * FROM brands_schema.products WHERE category_id = :categoryId ORDER BY priority ASC NULLS LAST, id ASC", nativeQuery = true)
     List<Product> findByCategoryIdOrderedByProductOrder(@Param("categoryId") Integer categoryId);
 
     @Modifying(clearAutomatically = true)

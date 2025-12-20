@@ -10,7 +10,10 @@ import com.system.brands.Repository.BrandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,14 +37,26 @@ public class BrandService {
         return convertToBrandResponseDto(brand);
     }
 
+    @Transactional(readOnly = true)
+    public Brand getBrandEntityById(Integer id) {
+        return brandRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand", "id", id));
+    }
+
     @Transactional
-    public BrandResponseDto createBrand(BrandRequestDto requestDto) {
+    public BrandResponseDto createBrand(BrandRequestDto requestDto, MultipartFile image) throws IOException {
         if (brandRepository.existsByName(requestDto.getName())) {
             throw new DuplicateResourceException("Brand", "name", requestDto.getName());
         }
 
+        byte[] imageBytes = null;
+        if (image != null && !image.isEmpty()) {
+            imageBytes = image.getBytes();
+        }
+
         Brand brand = Brand.builder()
                 .name(requestDto.getName())
+                .image(imageBytes)
                 .build();
 
         Brand savedBrand = brandRepository.save(brand);
@@ -49,7 +64,8 @@ public class BrandService {
     }
 
     @Transactional
-    public BrandResponseDto updateBrand(Integer id, BrandRequestDto requestDto) {
+    public BrandResponseDto updateBrand(Integer id, BrandRequestDto requestDto, MultipartFile image)
+            throws IOException {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand", "id", id));
 
@@ -60,6 +76,12 @@ public class BrandService {
         }
 
         brand.setName(requestDto.getName());
+
+        // Handle image update
+        if (image != null && !image.isEmpty()) {
+            brand.setImage(image.getBytes());
+        }
+
         Brand updatedBrand = brandRepository.save(brand);
         return convertToBrandResponseDto(updatedBrand);
     }
@@ -92,15 +114,26 @@ public class BrandService {
                             builder.productOrder(product.getProductOrder());
                         }
 
+                        if (product.getImage() != null) {
+                            builder.image(Base64.getEncoder().encodeToString(product.getImage()))
+                                    .imageUrl("/api/products/" + product.getId() + "/image");
+                        }
+
                         return builder.build();
                     })
                     .collect(Collectors.toList());
         }
 
-        return BrandResponseDto.builder()
+        BrandResponseDto.BrandResponseDtoBuilder builder = BrandResponseDto.builder()
                 .id(brand.getId())
                 .name(brand.getName())
-                .products(products)
-                .build();
+                .products(products);
+
+        if (brand.getImage() != null) {
+            builder.image(Base64.getEncoder().encodeToString(brand.getImage()))
+                    .imageUrl("/api/brands/" + brand.getId() + "/image");
+        }
+
+        return builder.build();
     }
 }

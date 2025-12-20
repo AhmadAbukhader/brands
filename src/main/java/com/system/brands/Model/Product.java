@@ -29,6 +29,9 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "image", columnDefinition = "BYTEA")
+    private byte[] image;
+
     @Column(name = "priority")
     private Integer productOrder;
 }

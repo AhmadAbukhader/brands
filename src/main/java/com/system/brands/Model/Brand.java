@@ -23,6 +23,9 @@ public class Brand {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(name = "image", columnDefinition = "BYTEA")
+    private byte[] image;
+
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Product> products;
 
