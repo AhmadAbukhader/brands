@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "categories")
+@Table(schema = "brands_schema", name = "categories")
 public class Category {
 
     @Id
