@@ -67,7 +67,7 @@ public class BrandController {
                         @ApiResponse(responseCode = "401", description = "Unauthorized")
         })
         public ResponseEntity<BrandResponseDto> createBrand(
-                        @Parameter(description = "Brand name", required = true) @RequestPart("name") String name,
+                        @Parameter(description = "Brand name", required = true) @RequestParam("name") String name,
                         @Parameter(description = "Brand image file") @RequestPart(value = "image", required = false) MultipartFile image)
                         throws IOException {
                 if (name == null || name.trim().isEmpty()) {
@@ -100,7 +100,7 @@ public class BrandController {
         })
         public ResponseEntity<BrandResponseDto> updateBrand(
                         @PathVariable Integer id,
-                        @Parameter(description = "Brand name", required = true) @RequestPart(value = "name", required = false) String name,
+                        @Parameter(description = "Brand name", required = true) @RequestParam(value = "name", required = false) String name,
                         @Parameter(description = "Brand image file") @RequestPart(value = "image", required = false) MultipartFile image)
                         throws IOException {
                 if (name == null || name.trim().isEmpty()) {

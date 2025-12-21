@@ -100,9 +100,9 @@ public class ProductController {
                         @ApiResponse(responseCode = "401", description = "Unauthorized")
         })
         public ResponseEntity<ProductResponseDto> createProduct(
-                        @Parameter(description = "Brand ID", required = true) @RequestPart("brandId") Integer brandId,
-                        @Parameter(description = "Category ID") @RequestPart(value = "categoryId", required = false) Integer categoryId,
-                        @Parameter(description = "Product name", required = true) @RequestPart("name") String name,
+                        @Parameter(description = "Brand ID", required = true) @RequestParam("brandId") Integer brandId,
+                        @Parameter(description = "Category ID") @RequestParam(value = "categoryId", required = false) Integer categoryId,
+                        @Parameter(description = "Product name", required = true) @RequestParam("name") String name,
                         @Parameter(description = "Product image file") @RequestPart(value = "image", required = false) MultipartFile image)
                         throws IOException {
                 // Validate image if provided
@@ -130,9 +130,9 @@ public class ProductController {
         })
         public ResponseEntity<ProductResponseDto> updateProduct(
                         @PathVariable Integer id,
-                        @Parameter(description = "Brand ID", required = true) @RequestPart("brandId") Integer brandId,
-                        @Parameter(description = "Category ID") @RequestPart(value = "categoryId", required = false) Integer categoryId,
-                        @Parameter(description = "Product name", required = true) @RequestPart("name") String name,
+                        @Parameter(description = "Brand ID", required = true) @RequestParam("brandId") Integer brandId,
+                        @Parameter(description = "Category ID") @RequestParam(value = "categoryId", required = false) Integer categoryId,
+                        @Parameter(description = "Product name", required = true) @RequestParam("name") String name,
                         @Parameter(description = "Product image file") @RequestPart(value = "image", required = false) MultipartFile image)
                         throws IOException {
                 // Validate image if provided
