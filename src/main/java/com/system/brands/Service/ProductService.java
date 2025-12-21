@@ -106,20 +106,26 @@ public class ProductService {
                 Product product = productRepository.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
-                Brand brand = brandRepository.findById(requestDto.getBrandId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Brand", "id",
-                                                requestDto.getBrandId()));
-
-                Category category = null;
-                if (requestDto.getCategoryId() != null) {
-                        category = categoryRepository.findById(requestDto.getCategoryId())
-                                        .orElseThrow(() -> new ResourceNotFoundException("Category", "id",
-                                                        requestDto.getCategoryId()));
+                // Only update brand if provided
+                if (requestDto.getBrandId() != null) {
+                        Brand brand = brandRepository.findById(requestDto.getBrandId())
+                                        .orElseThrow(() -> new ResourceNotFoundException("Brand", "id",
+                                                        requestDto.getBrandId()));
+                        product.setBrand(brand);
                 }
 
-                product.setBrand(brand);
-                product.setCategory(category);
-                product.setName(requestDto.getName());
+                // Only update category if provided
+                if (requestDto.getCategoryId() != null) {
+                        Category category = categoryRepository.findById(requestDto.getCategoryId())
+                                        .orElseThrow(() -> new ResourceNotFoundException("Category", "id",
+                                                        requestDto.getCategoryId()));
+                        product.setCategory(category);
+                }
+
+                // Only update name if provided
+                if (requestDto.getName() != null && !requestDto.getName().trim().isEmpty()) {
+                        product.setName(requestDto.getName().trim());
+                }
 
                 // Handle image update
                 if (image != null && !image.isEmpty()) {

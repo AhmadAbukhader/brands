@@ -100,20 +100,19 @@ public class BrandService {
     @Transactional
     public BrandResponseDto updateBrand(Integer id, BrandRequestDto requestDto, MultipartFile image)
             throws IOException {
-        if (requestDto == null || requestDto.getName() == null || requestDto.getName().trim().isEmpty()) {
-            throw new BadRequestException("Brand name is required");
-        }
-
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand", "id", id));
 
-        String brandName = requestDto.getName().trim();
-        if (!brand.getName().equals(brandName) &&
-                brandRepository.existsByName(brandName)) {
-            throw new DuplicateResourceException("Brand", "name", brandName);
+        // Only update name if provided
+        if (requestDto != null && requestDto.getName() != null && !requestDto.getName().trim().isEmpty()) {
+            String brandName = requestDto.getName().trim();
+            // Check for duplicate name only if name is changing
+            if (!brand.getName().equals(brandName) &&
+                    brandRepository.existsByName(brandName)) {
+                throw new DuplicateResourceException("Brand", "name", brandName);
+            }
+            brand.setName(brandName);
         }
-
-        brand.setName(brandName);
 
         // Handle image update
         if (image != null && !image.isEmpty()) {

@@ -91,7 +91,7 @@ public class BrandController {
         }
 
         @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        @Operation(summary = "Update a brand", description = "Update an existing brand by its ID with optional new image")
+        @Operation(summary = "Update a brand", description = "Update an existing brand by its ID. All fields are optional - only provided fields will be updated.")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "Brand updated successfully"),
                         @ApiResponse(responseCode = "404", description = "Brand not found"),
@@ -100,24 +100,18 @@ public class BrandController {
         })
         public ResponseEntity<BrandResponseDto> updateBrand(
                         @PathVariable Integer id,
-                        @Parameter(description = "Brand name", required = true) @RequestParam(value = "name", required = false) String name,
-                        @Parameter(description = "Brand image file") @RequestPart(value = "image", required = false) MultipartFile image)
+                        @Parameter(description = "Brand name (optional)") @RequestParam(value = "name", required = false) String name,
+                        @Parameter(description = "Brand image file (optional)") @RequestPart(value = "image", required = false) MultipartFile image)
                         throws IOException {
-                if (name == null || name.trim().isEmpty()) {
-                        throw new BadRequestException("Brand name is required");
-                }
-
                 // Validate image if provided
                 if (image != null && !image.isEmpty()) {
                         validateImageFile(image);
                         log.info("Received image file for update: name={}, size={} bytes, contentType={}",
                                         image.getOriginalFilename(), image.getSize(), image.getContentType());
-                } else {
-                        log.info("No image file provided for brand update: id={}", id);
                 }
 
                 BrandRequestDto requestDto = BrandRequestDto.builder()
-                                .name(name.trim())
+                                .name(name != null ? name.trim() : null)
                                 .build();
                 BrandResponseDto brand = brandService.updateBrand(id, requestDto, image);
                 return ResponseEntity.ok(brand);

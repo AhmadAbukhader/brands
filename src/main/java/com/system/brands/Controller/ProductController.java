@@ -122,7 +122,7 @@ public class ProductController {
         }
 
         @PutMapping(value = "/{id:\\d+}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        @Operation(summary = "Update a product", description = "Update an existing product by its ID with optional new image")
+        @Operation(summary = "Update a product", description = "Update an existing product by its ID. All fields are optional - only provided fields will be updated.")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "Product updated successfully"),
                         @ApiResponse(responseCode = "404", description = "Product or Brand not found"),
@@ -130,10 +130,10 @@ public class ProductController {
         })
         public ResponseEntity<ProductResponseDto> updateProduct(
                         @PathVariable Integer id,
-                        @Parameter(description = "Brand ID", required = true) @RequestParam("brandId") Integer brandId,
-                        @Parameter(description = "Category ID") @RequestParam(value = "categoryId", required = false) Integer categoryId,
-                        @Parameter(description = "Product name", required = true) @RequestParam("name") String name,
-                        @Parameter(description = "Product image file") @RequestPart(value = "image", required = false) MultipartFile image)
+                        @Parameter(description = "Brand ID (optional)") @RequestParam(value = "brandId", required = false) Integer brandId,
+                        @Parameter(description = "Category ID (optional)") @RequestParam(value = "categoryId", required = false) Integer categoryId,
+                        @Parameter(description = "Product name (optional)") @RequestParam(value = "name", required = false) String name,
+                        @Parameter(description = "Product image file (optional)") @RequestPart(value = "image", required = false) MultipartFile image)
                         throws IOException {
                 // Validate image if provided
                 if (image != null && !image.isEmpty()) {
