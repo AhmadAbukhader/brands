@@ -3,7 +3,6 @@ package com.system.brands.Controller;
 import com.system.brands.Dto.BrandRequestDto;
 import com.system.brands.Dto.BrandResponseDto;
 import com.system.brands.Exception.BadRequestException;
-import com.system.brands.Model.Brand;
 import com.system.brands.Service.BrandService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -101,7 +100,7 @@ public class BrandController {
         })
         public ResponseEntity<BrandResponseDto> updateBrand(
                         @PathVariable Integer id,
-                        @Parameter(description = "Brand name", required = true) @RequestPart(value = "name" , required = false) String name,
+                        @Parameter(description = "Brand name", required = true) @RequestPart(value = "name", required = false) String name,
                         @Parameter(description = "Brand image file") @RequestPart(value = "image", required = false) MultipartFile image)
                         throws IOException {
                 if (name == null || name.trim().isEmpty()) {
@@ -122,24 +121,6 @@ public class BrandController {
                                 .build();
                 BrandResponseDto brand = brandService.updateBrand(id, requestDto, image);
                 return ResponseEntity.ok(brand);
-        }
-
-        @GetMapping("/{id}/image")
-        @Operation(summary = "Get brand image", description = "Retrieve the image for a specific brand")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Image retrieved successfully"),
-                        @ApiResponse(responseCode = "404", description = "Brand not found or no image available")
-        })
-        public ResponseEntity<byte[]> getBrandImage(@PathVariable Integer id) {
-                Brand brand = brandService.getBrandEntityById(id);
-
-                if (brand.getImage() == null || brand.getImage().length == 0) {
-                        return ResponseEntity.notFound().build();
-                }
-
-                return ResponseEntity.ok()
-                                .contentType(MediaType.IMAGE_JPEG) // Default to JPEG, you can enhance this
-                                .body(brand.getImage());
         }
 
         @DeleteMapping("/{id}")

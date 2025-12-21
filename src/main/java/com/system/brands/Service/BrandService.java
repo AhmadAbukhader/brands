@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +26,7 @@ import java.util.stream.Collectors;
 public class BrandService {
 
     private final BrandRepository brandRepository;
+    private final S3StorageService s3StorageService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -34,7 +34,7 @@ public class BrandService {
     @Transactional(readOnly = true)
     public List<BrandResponseDto> getAllBrands() {
         return brandRepository.findAll().stream()
-                .map(brand -> convertToBrandResponseDto(brand, false)) // Don't include products for list
+                .map(brand -> convertToBrandResponseDto(brand, false))
                 .collect(Collectors.toList());
     }
 
@@ -42,7 +42,7 @@ public class BrandService {
     public BrandResponseDto getBrandById(Integer id) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand", "id", id));
-        return convertToBrandResponseDto(brand, true); // Include products for single brand
+        return convertToBrandResponseDto(brand, true);
     }
 
     @Transactional(readOnly = true)
@@ -53,7 +53,6 @@ public class BrandService {
 
     @Transactional
     public BrandResponseDto createBrand(BrandRequestDto requestDto, MultipartFile image) throws IOException {
-        // Validate request DTO
         if (requestDto == null || requestDto.getName() == null || requestDto.getName().trim().isEmpty()) {
             throw new BadRequestException("Brand name is required");
         }
@@ -63,31 +62,30 @@ public class BrandService {
             throw new DuplicateResourceException("Brand", "name", brandName);
         }
 
-        byte[] imageBytes = null;
+        // Upload image to S3
+        String imageS3Key = null;
         if (image != null && !image.isEmpty()) {
-            imageBytes = image.getBytes();
+            imageS3Key = s3StorageService.uploadFile(image, "brands");
+            log.info("Brand image uploaded to S3: key={}", imageS3Key);
         }
 
         Brand brand = Brand.builder()
                 .name(brandName)
-                .image(imageBytes)
+                .imageS3Key(imageS3Key)
                 .build();
 
         log.debug("Creating brand with name: {}", brandName);
         Brand savedBrand = brandRepository.save(brand);
 
-        // Flush to ensure the entity is persisted immediately
         entityManager.flush();
         entityManager.refresh(savedBrand);
 
         log.debug("Brand saved successfully with ID: {}", savedBrand.getId());
 
-        // Verify the brand was saved
         if (savedBrand == null || savedBrand.getId() == null) {
             throw new RuntimeException("Failed to save brand to database");
         }
 
-        // Double-check by querying the database
         Brand verifiedBrand = brandRepository.findById(savedBrand.getId())
                 .orElseThrow(() -> new RuntimeException(
                         "Brand was saved but cannot be retrieved from database. ID: " + savedBrand.getId()));
@@ -102,7 +100,6 @@ public class BrandService {
     @Transactional
     public BrandResponseDto updateBrand(Integer id, BrandRequestDto requestDto, MultipartFile image)
             throws IOException {
-        // Validate request DTO
         if (requestDto == null || requestDto.getName() == null || requestDto.getName().trim().isEmpty()) {
             throw new BadRequestException("Brand name is required");
         }
@@ -111,7 +108,6 @@ public class BrandService {
                 .orElseThrow(() -> new ResourceNotFoundException("Brand", "id", id));
 
         String brandName = requestDto.getName().trim();
-        // Check if new name already exists for another brand
         if (!brand.getName().equals(brandName) &&
                 brandRepository.existsByName(brandName)) {
             throw new DuplicateResourceException("Brand", "name", brandName);
@@ -121,19 +117,25 @@ public class BrandService {
 
         // Handle image update
         if (image != null && !image.isEmpty()) {
-            brand.setImage(image.getBytes());
+            // Delete old image from S3 if exists
+            if (brand.getImageS3Key() != null) {
+                s3StorageService.deleteFile(brand.getImageS3Key());
+                log.info("Old brand image deleted from S3: key={}", brand.getImageS3Key());
+            }
+            // Upload new image to S3
+            String imageS3Key = s3StorageService.uploadFile(image, "brands");
+            brand.setImageS3Key(imageS3Key);
+            log.info("New brand image uploaded to S3: key={}", imageS3Key);
         }
 
         log.debug("Updating brand with ID: {}", id);
         Brand updatedBrand = brandRepository.save(brand);
 
-        // Flush to ensure the entity is persisted immediately
         entityManager.flush();
         entityManager.refresh(updatedBrand);
 
         log.debug("Brand updated successfully with ID: {}", updatedBrand.getId());
 
-        // Verify the brand was updated
         if (updatedBrand == null || updatedBrand.getId() == null) {
             throw new RuntimeException("Failed to update brand in database");
         }
@@ -147,17 +149,16 @@ public class BrandService {
     public void deleteBrand(Integer id) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand", "id", id));
+
+        // Delete associated image from S3
+        if (brand.getImageS3Key() != null) {
+            s3StorageService.deleteFile(brand.getImageS3Key());
+            log.info("Brand image deleted from S3: key={}", brand.getImageS3Key());
+        }
+
         brandRepository.delete(brand);
     }
 
-    /**
-     * Converts a Brand entity to BrandResponseDto.
-     * 
-     * @param brand           The brand entity to convert
-     * @param includeProducts Whether to include the list of products in the
-     *                        response
-     * @return BrandResponseDto
-     */
     private BrandResponseDto convertToBrandResponseDto(Brand brand, boolean includeProducts) {
         if (brand == null) {
             throw new IllegalArgumentException("Brand cannot be null");
@@ -167,7 +168,6 @@ public class BrandService {
                 .id(brand.getId())
                 .name(brand.getName());
 
-        // Only include products if requested (for optimization)
         if (includeProducts && brand.getProducts() != null && !brand.getProducts().isEmpty()) {
             List<ProductResponseDto> products = brand.getProducts().stream()
                     .map(product -> {
@@ -186,9 +186,10 @@ public class BrandService {
                             productBuilder.productOrder(product.getProductOrder());
                         }
 
-                        if (product.getImage() != null) {
-                            productBuilder.image(Base64.getEncoder().encodeToString(product.getImage()))
-                                    .imageUrl("/api/products/" + product.getId() + "/image");
+                        // Get image URL from S3
+                        if (product.getImageS3Key() != null) {
+                            String imageUrl = s3StorageService.getFileUrl(product.getImageS3Key());
+                            productBuilder.imageUrl(imageUrl);
                         }
 
                         return productBuilder.build();
@@ -197,9 +198,10 @@ public class BrandService {
             builder.products(products);
         }
 
-        if (brand.getImage() != null) {
-            builder.image(Base64.getEncoder().encodeToString(brand.getImage()))
-                    .imageUrl("/api/brands/" + brand.getId() + "/image");
+        // Get image URL from S3
+        if (brand.getImageS3Key() != null) {
+            String imageUrl = s3StorageService.getFileUrl(brand.getImageS3Key());
+            builder.imageUrl(imageUrl);
         }
 
         return builder.build();

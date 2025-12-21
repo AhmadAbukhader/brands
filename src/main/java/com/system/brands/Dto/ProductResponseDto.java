@@ -38,12 +38,8 @@ public class ProductResponseDto {
     @Schema(description = "Product name", example = "Air Max 90")
     private String name;
 
-    @JsonProperty("image")
-    @Schema(description = "Product image as base64 encoded string")
-    private String image;
-
     @JsonProperty("imageUrl")
-    @Schema(description = "URL to fetch product image", example = "/api/products/1/image")
+    @Schema(description = "S3 URL to product image", example = "https://brands-bucket-818.s3.us-east-1.amazonaws.com/products/uuid.png")
     private String imageUrl;
 
     @JsonProperty("productOrder")

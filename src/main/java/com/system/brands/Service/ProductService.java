@@ -11,15 +11,16 @@ import com.system.brands.Repository.BrandRepository;
 import com.system.brands.Repository.CategoryRepository;
 import com.system.brands.Repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -27,6 +28,7 @@ public class ProductService {
         private final ProductRepository productRepository;
         private final BrandRepository brandRepository;
         private final CategoryRepository categoryRepository;
+        private final S3StorageService s3StorageService;
 
         @Transactional(readOnly = true)
         public List<ProductResponseDto> getAllProducts() {
@@ -75,16 +77,18 @@ public class ProductService {
                                                         requestDto.getCategoryId()));
                 }
 
-                byte[] imageBytes = null;
+                // Upload image to S3
+                String imageS3Key = null;
                 if (image != null && !image.isEmpty()) {
-                        imageBytes = image.getBytes();
+                        imageS3Key = s3StorageService.uploadFile(image, "products");
+                        log.info("Product image uploaded to S3: key={}", imageS3Key);
                 }
 
                 Product product = Product.builder()
                                 .brand(brand)
                                 .category(category)
                                 .name(requestDto.getName())
-                                .image(imageBytes)
+                                .imageS3Key(imageS3Key)
                                 .build();
 
                 Product savedProduct = productRepository.save(product);
@@ -119,7 +123,15 @@ public class ProductService {
 
                 // Handle image update
                 if (image != null && !image.isEmpty()) {
-                        product.setImage(image.getBytes());
+                        // Delete old image from S3 if exists
+                        if (product.getImageS3Key() != null) {
+                                s3StorageService.deleteFile(product.getImageS3Key());
+                                log.info("Old product image deleted from S3: key={}", product.getImageS3Key());
+                        }
+                        // Upload new image to S3
+                        String imageS3Key = s3StorageService.uploadFile(image, "products");
+                        product.setImageS3Key(imageS3Key);
+                        log.info("New product image uploaded to S3: key={}", imageS3Key);
                 }
 
                 Product updatedProduct = productRepository.save(product);
@@ -130,6 +142,13 @@ public class ProductService {
         public void deleteProduct(Integer id) {
                 Product product = productRepository.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
+
+                // Delete associated image from S3
+                if (product.getImageS3Key() != null) {
+                        s3StorageService.deleteFile(product.getImageS3Key());
+                        log.info("Product image deleted from S3: key={}", product.getImageS3Key());
+                }
+
                 productRepository.delete(product);
         }
 
@@ -143,34 +162,24 @@ public class ProductService {
                 Integer newOrder = requestDto.getNewOrder();
 
                 if (currentOrder == null) {
-                        // If product has no order, initialize it to its id
                         currentOrder = product.getId();
                         product.setProductOrder(currentOrder);
                         productRepository.save(product);
                 }
 
                 if (currentOrder.equals(newOrder)) {
-                        // No change needed
                         return convertToProductResponseDto(product);
                 }
 
                 if (newOrder < currentOrder) {
-                        // Product moved upwards (e.g., 55 → 5)
-                        // Shift products from newOrder to currentOrder-1 up by 1 (increase their order
-                        // values)
                         productRepository.shiftOrdersUp(newOrder, currentOrder);
                 } else {
-                        // Product moved downwards (e.g., 5 → 55)
-                        // Shift products from currentOrder+1 to newOrder down by 1 (decrease their
-                        // order values)
                         productRepository.shiftOrdersDown(currentOrder, newOrder);
                 }
 
-                // Set the new order for the product
                 product.setProductOrder(newOrder);
                 productRepository.save(product);
 
-                // Reload the product from database to ensure we have the latest data
                 Product updatedProduct = productRepository.findById(requestDto.getProductId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id",
                                                 requestDto.getProductId()));
@@ -187,9 +196,10 @@ public class ProductService {
                                 .name(product.getName())
                                 .productOrder(product.getProductOrder());
 
-                if (product.getImage() != null) {
-                        builder.image(Base64.getEncoder().encodeToString(product.getImage()))
-                                        .imageUrl("/api/products/" + product.getId() + "/image");
+                // Get image URL from S3
+                if (product.getImageS3Key() != null) {
+                        String imageUrl = s3StorageService.getFileUrl(product.getImageS3Key());
+                        builder.imageUrl(imageUrl);
                 }
 
                 return builder.build();

@@ -24,12 +24,8 @@ public class BrandResponseDto {
     @Schema(description = "Brand name", example = "Nike")
     private String name;
 
-    @JsonProperty("image")
-    @Schema(description = "Brand image as base64 encoded string")
-    private String image;
-
     @JsonProperty("imageUrl")
-    @Schema(description = "URL to fetch brand image", example = "/api/brands/1/image")
+    @Schema(description = "S3 URL to brand image", example = "https://brands-bucket-818.s3.us-east-1.amazonaws.com/brands/uuid.png")
     private String imageUrl;
 
     @JsonProperty("products")

@@ -29,8 +29,8 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "image", columnDefinition = "BYTEA")
-    private byte[] image;
+    @Column(name = "image_s3_key", length = 500)
+    private String imageS3Key;
 
     @Column(name = "priority")
     private Integer productOrder;

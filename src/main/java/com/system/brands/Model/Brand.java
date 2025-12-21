@@ -23,8 +23,8 @@ public class Brand {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @Column(name = "image", columnDefinition = "BYTEA")
-    private byte[] image;
+    @Column(name = "image_s3_key", length = 500)
+    private String imageS3Key;
 
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Product> products;
