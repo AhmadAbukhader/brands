@@ -34,4 +34,7 @@ public class Product {
 
     @Column(name = "priority")
     private Integer productOrder;
+
+    @Column(name = "packaging")
+    private String packaging;
 }

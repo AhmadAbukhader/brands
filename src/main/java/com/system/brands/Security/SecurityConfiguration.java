@@ -44,9 +44,11 @@ public class SecurityConfiguration {
                                                 .permitAll()
                                                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                                                 .requestMatchers("/error").permitAll()
-                                                // Allow GET requests to brands and products without authentication
+                                                // Allow GET requests to brands, products, and categories without
+                                                // authentication
                                                 .requestMatchers("GET", "/api/brands/**").permitAll()
                                                 .requestMatchers("GET", "/api/products/**").permitAll()
+                                                .requestMatchers("GET", "/api/categories/**").permitAll()
                                                 // any other url need to be authenticated
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session

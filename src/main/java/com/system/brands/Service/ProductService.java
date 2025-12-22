@@ -89,6 +89,7 @@ public class ProductService {
                                 .category(category)
                                 .name(requestDto.getName())
                                 .imageS3Key(imageS3Key)
+                                .packaging(requestDto.getPackaging())
                                 .build();
 
                 Product savedProduct = productRepository.save(product);
@@ -125,6 +126,12 @@ public class ProductService {
                 // Only update name if provided
                 if (requestDto.getName() != null && !requestDto.getName().trim().isEmpty()) {
                         product.setName(requestDto.getName().trim());
+                }
+
+                // Only update packaging if provided
+                if (requestDto.getPackaging() != null) {
+                        product.setPackaging(requestDto.getPackaging().trim().isEmpty() ? null
+                                        : requestDto.getPackaging().trim());
                 }
 
                 // Handle image update
@@ -200,7 +207,8 @@ public class ProductService {
                                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                                 .name(product.getName())
-                                .productOrder(product.getProductOrder());
+                                .productOrder(product.getProductOrder())
+                                .packaging(product.getPackaging());
 
                 // Get image URL from S3
                 if (product.getImageS3Key() != null) {

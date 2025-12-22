@@ -45,4 +45,8 @@ public class ProductResponseDto {
     @JsonProperty("productOrder")
     @Schema(description = "Product order for sorting", example = "1")
     private Integer productOrder;
+
+    @JsonProperty("packaging")
+    @Schema(description = "Product packaging information", example = "Box of 12 units")
+    private String packaging;
 }

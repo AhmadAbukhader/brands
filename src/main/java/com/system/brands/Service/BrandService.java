@@ -185,6 +185,10 @@ public class BrandService {
                             productBuilder.productOrder(product.getProductOrder());
                         }
 
+                        if (product.getPackaging() != null) {
+                            productBuilder.packaging(product.getPackaging());
+                        }
+
                         // Get image URL from S3
                         if (product.getImageS3Key() != null) {
                             String imageUrl = s3StorageService.getFileUrl(product.getImageS3Key());

@@ -21,4 +21,7 @@ public class ProductRequestDto {
 
     @Schema(description = "Product name", example = "Air Max 90", required = true)
     private String name;
+
+    @Schema(description = "Product packaging information", example = "Box of 12 units")
+    private String packaging;
 }
