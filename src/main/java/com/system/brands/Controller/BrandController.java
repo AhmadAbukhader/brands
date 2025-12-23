@@ -129,6 +129,18 @@ public class BrandController {
                 return ResponseEntity.noContent().build();
         }
 
+        @DeleteMapping("/{id}/image")
+        @Operation(summary = "Delete brand image", description = "Delete only the image of a brand from S3 storage without deleting the brand itself")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Brand image deleted successfully"),
+                        @ApiResponse(responseCode = "404", description = "Brand not found"),
+                        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        })
+        public ResponseEntity<BrandResponseDto> deleteBrandImage(@PathVariable Integer id) {
+                BrandResponseDto brand = brandService.deleteBrandImage(id);
+                return ResponseEntity.ok(brand);
+        }
+
         /**
          * Validates the uploaded image file for size and content type.
          */

@@ -158,6 +158,22 @@ public class BrandService {
         brandRepository.delete(brand);
     }
 
+    @Transactional
+    public BrandResponseDto deleteBrandImage(Integer id) {
+        Brand brand = brandRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand", "id", id));
+
+        // Delete image from S3 if exists
+        if (brand.getImageS3Key() != null) {
+            s3StorageService.deleteFile(brand.getImageS3Key());
+            log.info("Brand image deleted from S3: key={}", brand.getImageS3Key());
+            brand.setImageS3Key(null);
+            brand = brandRepository.save(brand);
+        }
+
+        return convertToBrandResponseDto(brand, false);
+    }
+
     private BrandResponseDto convertToBrandResponseDto(Brand brand, boolean includeProducts) {
         if (brand == null) {
             throw new IllegalArgumentException("Brand cannot be null");

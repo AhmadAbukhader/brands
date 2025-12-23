@@ -31,4 +31,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Product p SET p.productOrder = p.productOrder - 1 WHERE p.productOrder > :minOrder AND p.productOrder <= :maxOrder")
     void shiftOrdersDown(@Param("minOrder") Integer minOrder, @Param("maxOrder") Integer maxOrder);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Product p SET p.category.id = :newCategoryId WHERE p.category.id = :oldCategoryId")
+    void reassignProductsToCategory(@Param("oldCategoryId") Integer oldCategoryId,
+            @Param("newCategoryId") Integer newCategoryId);
 }

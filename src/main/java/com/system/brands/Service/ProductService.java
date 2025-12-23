@@ -166,6 +166,22 @@ public class ProductService {
         }
 
         @Transactional
+        public ProductResponseDto deleteProductImage(Integer id) {
+                Product product = productRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
+
+                // Delete image from S3 if exists
+                if (product.getImageS3Key() != null) {
+                        s3StorageService.deleteFile(product.getImageS3Key());
+                        log.info("Product image deleted from S3: key={}", product.getImageS3Key());
+                        product.setImageS3Key(null);
+                        product = productRepository.save(product);
+                }
+
+                return convertToProductResponseDto(product);
+        }
+
+        @Transactional
         public ProductResponseDto reorderProduct(ProductOrderRequestDto requestDto) {
                 Product product = productRepository.findById(requestDto.getProductId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id",

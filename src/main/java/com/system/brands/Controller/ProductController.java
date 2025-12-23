@@ -163,6 +163,18 @@ public class ProductController {
                 return ResponseEntity.noContent().build();
         }
 
+        @DeleteMapping("/{id:\\d+}/image")
+        @Operation(summary = "Delete product image", description = "Delete only the image of a product from S3 storage without deleting the product itself")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Product image deleted successfully"),
+                        @ApiResponse(responseCode = "404", description = "Product not found"),
+                        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        })
+        public ResponseEntity<ProductResponseDto> deleteProductImage(@PathVariable Integer id) {
+                ProductResponseDto product = productService.deleteProductImage(id);
+                return ResponseEntity.ok(product);
+        }
+
         /**
          * Validates the uploaded image file for size and content type.
          */
