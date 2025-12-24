@@ -90,6 +90,8 @@ public class ProductService {
                                 .name(requestDto.getName())
                                 .imageS3Key(imageS3Key)
                                 .packaging(requestDto.getPackaging())
+                                .isNew(requestDto.getIsNew())
+                                .isHidden(requestDto.getIsHidden())
                                 .build();
 
                 Product savedProduct = productRepository.save(product);
@@ -132,6 +134,16 @@ public class ProductService {
                 if (requestDto.getPackaging() != null) {
                         product.setPackaging(requestDto.getPackaging().trim().isEmpty() ? null
                                         : requestDto.getPackaging().trim());
+                }
+
+                // Only update isNew if provided
+                if (requestDto.getIsNew() != null) {
+                        product.setIsNew(requestDto.getIsNew());
+                }
+
+                // Only update isHidden if provided
+                if (requestDto.getIsHidden() != null) {
+                        product.setIsHidden(requestDto.getIsHidden());
                 }
 
                 // Handle image update
@@ -224,7 +236,9 @@ public class ProductService {
                                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                                 .name(product.getName())
                                 .productOrder(product.getProductOrder())
-                                .packaging(product.getPackaging());
+                                .packaging(product.getPackaging())
+                                .isNew(product.getIsNew())
+                                .isHidden(product.getIsHidden());
 
                 // Get image URL from S3
                 if (product.getImageS3Key() != null) {

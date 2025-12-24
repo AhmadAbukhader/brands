@@ -37,4 +37,10 @@ public class Product {
 
     @Column(name = "packaging")
     private String packaging;
+
+    @Column(name = "is_new")
+    private Boolean isNew;
+
+    @Column(name = "is_hidden")
+    private Boolean isHidden;
 }

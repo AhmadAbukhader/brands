@@ -24,4 +24,10 @@ public class ProductRequestDto {
 
     @Schema(description = "Product packaging information", example = "Box of 12 units")
     private String packaging;
+
+    @Schema(description = "Whether the product is new", example = "true")
+    private Boolean isNew;
+
+    @Schema(description = "Whether the product is hidden", example = "false")
+    private Boolean isHidden;
 }
