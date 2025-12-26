@@ -71,6 +71,7 @@ public class BrandService {
 
         Brand brand = Brand.builder()
                 .name(brandName)
+                .nameEnglish(requestDto.getNameEnglish() != null ? requestDto.getNameEnglish().trim() : null)
                 .imageS3Key(imageS3Key)
                 .build();
 
@@ -112,6 +113,11 @@ public class BrandService {
                 throw new DuplicateResourceException("Brand", "name", brandName);
             }
             brand.setName(brandName);
+        }
+
+        // Only update nameEnglish if provided
+        if (requestDto != null && requestDto.getNameEnglish() != null) {
+            brand.setNameEnglish(requestDto.getNameEnglish().trim());
         }
 
         // Handle image update
@@ -181,7 +187,8 @@ public class BrandService {
 
         BrandResponseDto.BrandResponseDtoBuilder builder = BrandResponseDto.builder()
                 .id(brand.getId())
-                .name(brand.getName());
+                .name(brand.getName())
+                .nameEnglish(brand.getNameEnglish());
 
         if (includeProducts && brand.getProducts() != null && !brand.getProducts().isEmpty()) {
             List<ProductResponseDto> products = brand.getProducts().stream()

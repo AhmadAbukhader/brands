@@ -23,6 +23,9 @@ public class Brand {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(name = "name_english")
+    private String nameEnglish;
+
     @Column(name = "image_s3_key", length = 500)
     private String imageS3Key;
 

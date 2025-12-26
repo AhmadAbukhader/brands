@@ -15,4 +15,7 @@ public class BrandRequestDto {
 
     @Schema(description = "Brand name", example = "Nike", required = true)
     private String name;
+
+    @Schema(description = "Brand name in English", example = "Nike")
+    private String nameEnglish;
 }

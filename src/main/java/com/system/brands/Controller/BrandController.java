@@ -68,6 +68,7 @@ public class BrandController {
         })
         public ResponseEntity<BrandResponseDto> createBrand(
                         @Parameter(description = "Brand name", required = true) @RequestParam("name") String name,
+                        @Parameter(description = "Brand name in English") @RequestParam(value = "nameEnglish", required = false) String nameEnglish,
                         @Parameter(description = "Brand image file") @RequestPart(value = "image", required = false) MultipartFile image)
                         throws IOException {
                 if (name == null || name.trim().isEmpty()) {
@@ -85,6 +86,7 @@ public class BrandController {
 
                 BrandRequestDto requestDto = BrandRequestDto.builder()
                                 .name(name.trim())
+                                .nameEnglish(nameEnglish != null ? nameEnglish.trim() : null)
                                 .build();
                 BrandResponseDto brand = brandService.createBrand(requestDto, image);
                 return ResponseEntity.status(HttpStatus.CREATED).body(brand);
@@ -101,6 +103,7 @@ public class BrandController {
         public ResponseEntity<BrandResponseDto> updateBrand(
                         @PathVariable Integer id,
                         @Parameter(description = "Brand name (optional)") @RequestParam(value = "name", required = false) String name,
+                        @Parameter(description = "Brand name in English (optional)") @RequestParam(value = "nameEnglish", required = false) String nameEnglish,
                         @Parameter(description = "Brand image file (optional)") @RequestPart(value = "image", required = false) MultipartFile image)
                         throws IOException {
                 // Validate image if provided
@@ -112,6 +115,7 @@ public class BrandController {
 
                 BrandRequestDto requestDto = BrandRequestDto.builder()
                                 .name(name != null ? name.trim() : null)
+                                .nameEnglish(nameEnglish != null ? nameEnglish.trim() : null)
                                 .build();
                 BrandResponseDto brand = brandService.updateBrand(id, requestDto, image);
                 return ResponseEntity.ok(brand);
